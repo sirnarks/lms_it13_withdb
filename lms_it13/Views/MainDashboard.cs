@@ -22,9 +22,18 @@ namespace lms_it13
             lblLoggedUser.Text = $"Logged in as: {loggedInUser}";
 
             ApplyTheme();
-            LoadUserControl(new DashboardControl());
             ApplyRolePermissions();
+            if (currentRole == UserRole.Admin ||
+                currentRole == UserRole.Librarian)
+            {
+                LoadUserControl(new ReportsControl());
+            }
+            else
+            {
+                LoadUserControl(new TermsControl());
+            }
         }
+        
 
         private void LoadUserControl(UserControl control)
         {
@@ -35,7 +44,6 @@ namespace lms_it13
 
         private void ApplyRolePermissions()
         {
-            btnDashboard.Visible = true;
             btnManageBooks.Visible = true;
             btnBrowseBooks.Visible = true;
             btnUsers.Visible = true;
@@ -49,26 +57,29 @@ namespace lms_it13
             switch (currentRole)
             {
                 case UserRole.Member:
-                    btnManageBooks.Visible = false;
-                    btnUsers.Visible = false;
+                    btnManageBooks.Visible = false;                   
                     btnReports.Visible = false;
                     btnSales.Visible = false;
                     break;
 
                 case UserRole.Librarian:
-                    btnBrowseBooks.Visible = false;
-                    btnUsers.Visible = false;
                     btnManageMyBooks.Visible = false;
-                    btnReports.Visible = false;
+                    btnFines.Visible = false;
                     break;
 
                 case UserRole.Admin:
                     btnBrowseBooks.Visible = false;
-                    btnTNC.Visible = false;
                     btnManageMyBooks.Visible = false;
+                    btnFines.Visible = false;
+                  
+                   
                     break;
 
                 case UserRole.SuperAdmin:
+                    btnBrowseBooks.Visible = false;
+                    btnFines.Visible = false;
+                    btnManageMyBooks.Visible = false;
+                    btnReports.Visible = false;
                     break;
             }
         }
@@ -108,8 +119,7 @@ namespace lms_it13
         }
 
         // Navigation Buttons
-        private void btnDashboard_Click(object sender, EventArgs e)
-            => LoadUserControl(new DashboardControl());
+
 
         private void btnManageBooks_Click(object sender, EventArgs e)
             => LoadUserControl(new ManageBooksControl());
@@ -130,7 +140,7 @@ namespace lms_it13
             => LoadUserControl(new PaymentsControl(loggedInUser));
 
         private void btnUsers_Click(object sender, EventArgs e)
-            => LoadUserControl(new UserManagementControl(currentRole));
+            => LoadUserControl(new UserManagementControl(currentUsername, currentRole.ToString()));
 
         private void btnFines_Click(object sender, EventArgs e)
           => LoadUserControl(new FinesControl());

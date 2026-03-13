@@ -39,7 +39,6 @@
             btnPayments = new Button();
             btnUsers = new Button();
             btnManageBooks = new Button();
-            btnDashboard = new Button();
             lblLoggedUser = new Label();
             btnLogout = new Button();
             panelTop = new Panel();
@@ -67,7 +66,6 @@
             panelSidebar.Controls.Add(btnPayments);
             panelSidebar.Controls.Add(btnUsers);
             panelSidebar.Controls.Add(btnManageBooks);
-            panelSidebar.Controls.Add(btnDashboard);
             panelSidebar.Dock = DockStyle.Left;
             panelSidebar.ForeColor = SystemColors.ControlText;
             panelSidebar.Location = new Point(0, 0);
@@ -78,7 +76,7 @@
             // btnManageMyBooks
             // 
             btnManageMyBooks.Dock = DockStyle.Top;
-            btnManageMyBooks.Location = new Point(0, 405);
+            btnManageMyBooks.Location = new Point(0, 360);
             btnManageMyBooks.Name = "btnManageMyBooks";
             btnManageMyBooks.Size = new Size(200, 45);
             btnManageMyBooks.TabIndex = 9;
@@ -89,7 +87,7 @@
             // btnBrowseBooks
             // 
             btnBrowseBooks.Dock = DockStyle.Top;
-            btnBrowseBooks.Location = new Point(0, 360);
+            btnBrowseBooks.Location = new Point(0, 315);
             btnBrowseBooks.Name = "btnBrowseBooks";
             btnBrowseBooks.Size = new Size(200, 45);
             btnBrowseBooks.TabIndex = 8;
@@ -100,7 +98,7 @@
             // btnTNC
             // 
             btnTNC.Dock = DockStyle.Top;
-            btnTNC.Location = new Point(0, 315);
+            btnTNC.Location = new Point(0, 270);
             btnTNC.Name = "btnTNC";
             btnTNC.Size = new Size(200, 45);
             btnTNC.TabIndex = 7;
@@ -111,7 +109,7 @@
             // btnReports
             // 
             btnReports.Dock = DockStyle.Top;
-            btnReports.Location = new Point(0, 270);
+            btnReports.Location = new Point(0, 225);
             btnReports.Name = "btnReports";
             btnReports.Size = new Size(200, 45);
             btnReports.TabIndex = 6;
@@ -122,7 +120,7 @@
             // btnFines
             // 
             btnFines.Dock = DockStyle.Top;
-            btnFines.Location = new Point(0, 225);
+            btnFines.Location = new Point(0, 180);
             btnFines.Name = "btnFines";
             btnFines.Size = new Size(200, 45);
             btnFines.TabIndex = 5;
@@ -133,7 +131,7 @@
             // btnSales
             // 
             btnSales.Dock = DockStyle.Top;
-            btnSales.Location = new Point(0, 180);
+            btnSales.Location = new Point(0, 135);
             btnSales.Name = "btnSales";
             btnSales.Size = new Size(200, 45);
             btnSales.TabIndex = 4;
@@ -144,7 +142,7 @@
             // btnPayments
             // 
             btnPayments.Dock = DockStyle.Top;
-            btnPayments.Location = new Point(0, 135);
+            btnPayments.Location = new Point(0, 90);
             btnPayments.Name = "btnPayments";
             btnPayments.Size = new Size(200, 45);
             btnPayments.TabIndex = 3;
@@ -155,35 +153,24 @@
             // btnUsers
             // 
             btnUsers.Dock = DockStyle.Top;
-            btnUsers.Location = new Point(0, 90);
+            btnUsers.Location = new Point(0, 45);
             btnUsers.Name = "btnUsers";
             btnUsers.Size = new Size(200, 45);
             btnUsers.TabIndex = 2;
-            btnUsers.Text = "Users";
+            btnUsers.Text = "Users Management";
             btnUsers.UseVisualStyleBackColor = true;
             btnUsers.Click += btnUsers_Click;
             // 
             // btnManageBooks
             // 
             btnManageBooks.Dock = DockStyle.Top;
-            btnManageBooks.Location = new Point(0, 45);
+            btnManageBooks.Location = new Point(0, 0);
             btnManageBooks.Name = "btnManageBooks";
             btnManageBooks.Size = new Size(200, 45);
             btnManageBooks.TabIndex = 1;
             btnManageBooks.Text = "ManageBooks";
             btnManageBooks.UseVisualStyleBackColor = true;
             btnManageBooks.Click += btnManageBooks_Click;
-            // 
-            // btnDashboard
-            // 
-            btnDashboard.Dock = DockStyle.Top;
-            btnDashboard.Location = new Point(0, 0);
-            btnDashboard.Name = "btnDashboard";
-            btnDashboard.Size = new Size(200, 45);
-            btnDashboard.TabIndex = 0;
-            btnDashboard.Text = "Dashboard";
-            btnDashboard.UseVisualStyleBackColor = true;
-            btnDashboard.Click += btnDashboard_Click;
             // 
             // lblLoggedUser
             // 
@@ -236,7 +223,6 @@
         private Panel panelContent;
         private Panel panelTop;
         private Panel panelSidebar;
-        private Button btnDashboard;
         private Button btnTNC;
         private Button btnReports;
         private Button btnFines;

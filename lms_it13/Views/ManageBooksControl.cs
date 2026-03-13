@@ -5,12 +5,17 @@ using System.Windows.Forms;
 
 namespace lms_it13.Views
 {
-    public partial class ManageBooksControl : UserControl
+    public class ManageBooksControl : UserControl
     {
         private DataGridView dgvBooks;
-        private Button btnAdd, btnToggleStatus;
-        private TextBox txtISBN, txtTitle, txtAuthor, txtSection;
-        private ComboBox cmbStatus;
+
+        private TextBox txtISBN;
+        private TextBox txtTitle;
+        private TextBox txtAuthor;
+        private TextBox txtSection;
+        private TextBox txtCopies;
+
+        private Button btnAdd;
 
         public ManageBooksControl()
         {
@@ -23,15 +28,12 @@ namespace lms_it13.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = ColorTranslator.FromHtml("#F7F8F0");
 
-            // 🔹 TOP FORM
-            txtISBN = new TextBox() { PlaceholderText = "ISBN", Width = 120 };
+            // 🔹 INPUT FIELDS
+            txtISBN = new TextBox() { PlaceholderText = "ISBN", Width = 100 };
             txtTitle = new TextBox() { PlaceholderText = "Title", Width = 150 };
             txtAuthor = new TextBox() { PlaceholderText = "Author", Width = 150 };
             txtSection = new TextBox() { PlaceholderText = "Section", Width = 120 };
-
-            cmbStatus = new ComboBox() { Width = 130 };
-            cmbStatus.Items.AddRange(new string[] { "Available", "Unavailable" });
-            cmbStatus.SelectedIndex = 0;
+            txtCopies = new TextBox() { PlaceholderText = "Copies", Width = 80 };
 
             btnAdd = new Button()
             {
@@ -41,18 +43,19 @@ namespace lms_it13.Views
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat
             };
+
             btnAdd.Click += BtnAdd_Click;
 
             FlowLayoutPanel topPanel = new FlowLayoutPanel();
             topPanel.Dock = DockStyle.Top;
-            topPanel.Height = 60;
-            topPanel.Padding = new Padding(20, 15, 0, 0);
+            topPanel.Height = 70;
+            topPanel.Padding = new Padding(20, 20, 0, 0);
 
             topPanel.Controls.Add(txtISBN);
             topPanel.Controls.Add(txtTitle);
             topPanel.Controls.Add(txtAuthor);
             topPanel.Controls.Add(txtSection);
-            topPanel.Controls.Add(cmbStatus);
+            topPanel.Controls.Add(txtCopies);
             topPanel.Controls.Add(btnAdd);
 
             // 🔹 TABLE
@@ -62,6 +65,7 @@ namespace lms_it13.Views
             dgvBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvBooks.AllowUserToAddRows = false;
             dgvBooks.MultiSelect = false;
+            dgvBooks.ReadOnly = true;
 
             dgvBooks.Columns.Add("Id", "Id");
             dgvBooks.Columns["Id"].Visible = false;
@@ -72,28 +76,25 @@ namespace lms_it13.Views
             dgvBooks.Columns.Add("Section", "Section");
             dgvBooks.Columns.Add("AvailableCopies", "Available Copies");
 
-            // 🔹 Toggle Button
-            btnToggleStatus = new Button()
-            {
-                Text = "Toggle Status",
-                Dock = DockStyle.Bottom,
-                Height = 40,
-                BackColor = ColorTranslator.FromHtml("#7AAACE"),
-                FlatStyle = FlatStyle.Flat
-            };
-            btnToggleStatus.Click += BtnToggleStatus_Click;
-
             this.Controls.Add(dgvBooks);
-            this.Controls.Add(btnToggleStatus);
             this.Controls.Add(topPanel);
         }
 
         private void BtnAdd_Click(object sender, EventArgs e)
         {
-            if (txtISBN.Text == "" || txtTitle.Text == "" ||
-                txtAuthor.Text == "" || txtSection.Text == "")
+            if (string.IsNullOrWhiteSpace(txtISBN.Text) ||
+                string.IsNullOrWhiteSpace(txtTitle.Text) ||
+                string.IsNullOrWhiteSpace(txtAuthor.Text) ||
+                string.IsNullOrWhiteSpace(txtSection.Text) ||
+                string.IsNullOrWhiteSpace(txtCopies.Text))
             {
                 MessageBox.Show("Please fill all fields.");
+                return;
+            }
+
+            if (!int.TryParse(txtCopies.Text.Trim(), out int copies) || copies < 0)
+            {
+                MessageBox.Show("Copies must be a valid number.");
                 return;
             }
 
@@ -101,18 +102,18 @@ namespace lms_it13.Views
             {
                 conn.Open();
 
-                string query = @"INSERT INTO Books 
-                                (ISBN, Title, Author, Section, Status) 
-                                VALUES 
-                                (@isbn, @title, @author, @section, @status)";
+                string query = @"INSERT INTO Books
+                                (ISBN, Title, Author, Section, AvailableCopies)
+                                VALUES
+                                (@isbn, @title, @author, @section, @copies)";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@isbn", txtISBN.Text);
-                    cmd.Parameters.AddWithValue("@title", txtTitle.Text);
-                    cmd.Parameters.AddWithValue("@author", txtAuthor.Text);
-                    cmd.Parameters.AddWithValue("@section", txtSection.Text);
-                    cmd.Parameters.AddWithValue("@status", cmbStatus.SelectedItem.ToString());
+                    cmd.Parameters.AddWithValue("@isbn", txtISBN.Text.Trim());
+                    cmd.Parameters.AddWithValue("@title", txtTitle.Text.Trim());
+                    cmd.Parameters.AddWithValue("@author", txtAuthor.Text.Trim());
+                    cmd.Parameters.AddWithValue("@section", txtSection.Text.Trim());
+                    cmd.Parameters.AddWithValue("@copies", copies);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -121,35 +122,6 @@ namespace lms_it13.Views
             MessageBox.Show("Book added successfully!");
 
             ClearInputs();
-            LoadBooksFromDatabase();
-        }
-
-        private void BtnToggleStatus_Click(object sender, EventArgs e)
-        {
-            if (dgvBooks.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Select a book first.");
-                return;
-            }
-
-            int id = Convert.ToInt32(dgvBooks.SelectedRows[0].Cells["Id"].Value);
-            string currentStatus = dgvBooks.SelectedRows[0].Cells["Status"].Value.ToString();
-            string newStatus = currentStatus == "Available" ? "Unavailable" : "Available";
-
-            using (SqlConnection conn = new SqlConnection(DatabaseHelper.ConnectionString))
-            {
-                conn.Open();
-
-                string query = "UPDATE Books SET Status = @status WHERE Id = @id";
-
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@status", newStatus);
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
             LoadBooksFromDatabase();
         }
 
@@ -187,7 +159,7 @@ namespace lms_it13.Views
             txtTitle.Clear();
             txtAuthor.Clear();
             txtSection.Clear();
-            cmbStatus.SelectedIndex = 0;
+            txtCopies.Clear();
         }
     }
 }

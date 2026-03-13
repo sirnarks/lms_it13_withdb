@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace lms_it13.Views
 {
-    public partial class ManageMyBooksControl : UserControl
+    public class ManageMyBooksControl : UserControl
     {
         private DataGridView dgvMyBooks;
         private Button btnReturn;
@@ -24,7 +24,6 @@ namespace lms_it13.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = ColorTranslator.FromHtml("#F7F8F0");
 
-            // ===== DATAGRID =====
             dgvMyBooks = new DataGridView();
             dgvMyBooks.Dock = DockStyle.Fill;
             dgvMyBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
@@ -32,43 +31,45 @@ namespace lms_it13.Views
             dgvMyBooks.AllowUserToAddRows = false;
             dgvMyBooks.MultiSelect = false;
             dgvMyBooks.RowHeadersVisible = false;
+            dgvMyBooks.ReadOnly = true;
 
             dgvMyBooks.Columns.Add("BorrowId", "BorrowId");
             dgvMyBooks.Columns["BorrowId"].Visible = false;
 
+            dgvMyBooks.Columns.Add("BookId", "BookId");
+            dgvMyBooks.Columns["BookId"].Visible = false;
+
+            dgvMyBooks.Columns.Add("ISBN", "ISBN");
             dgvMyBooks.Columns.Add("Title", "Title");
+            dgvMyBooks.Columns.Add("Author", "Author");
+            dgvMyBooks.Columns.Add("Section", "Section");
             dgvMyBooks.Columns.Add("BorrowDate", "Borrow Date");
             dgvMyBooks.Columns.Add("DueDate", "Due Date");
 
-            // ===== BOTTOM PANEL =====
             bottomPanel = new Panel();
             bottomPanel.Dock = DockStyle.Bottom;
             bottomPanel.Height = 70;
             bottomPanel.BackColor = Color.WhiteSmoke;
 
-            // ===== RETURN BUTTON =====
             btnReturn = new Button();
             btnReturn.Text = "Return Selected Book";
-            btnReturn.Width = 200;
+            btnReturn.Width = 220;
             btnReturn.Height = 40;
             btnReturn.BackColor = ColorTranslator.FromHtml("#355872");
             btnReturn.ForeColor = Color.White;
             btnReturn.FlatStyle = FlatStyle.Flat;
             btnReturn.FlatAppearance.BorderSize = 0;
+            btnReturn.Anchor = AnchorStyles.None;
 
-            // Center button
             btnReturn.Location = new Point(
                 (bottomPanel.Width - btnReturn.Width) / 2,
                 (bottomPanel.Height - btnReturn.Height) / 2
             );
 
-            btnReturn.Anchor = AnchorStyles.None;
-
             btnReturn.Click += BtnReturn_Click;
 
             bottomPanel.Controls.Add(btnReturn);
 
-            // ===== ADD TO CONTROL =====
             this.Controls.Add(dgvMyBooks);
             this.Controls.Add(bottomPanel);
         }
@@ -82,7 +83,14 @@ namespace lms_it13.Views
                 conn.Open();
 
                 string query = @"
-                    SELECT bb.Id, b.Title, bb.BorrowDate, bb.DueDate
+                    SELECT bb.Id AS BorrowId,
+                           b.Id AS BookId,
+                           b.ISBN,
+                           b.Title,
+                           b.Author,
+                           b.Section,
+                           bb.BorrowDate,
+                           bb.DueDate
                     FROM BorrowedBooks bb
                     JOIN Books b ON bb.BookId = b.Id
                     WHERE bb.Username = @username AND bb.Returned = 0";
@@ -96,8 +104,12 @@ namespace lms_it13.Views
                         while (reader.Read())
                         {
                             dgvMyBooks.Rows.Add(
-                                reader["Id"],
+                                reader["BorrowId"],
+                                reader["BookId"],
+                                reader["ISBN"],
                                 reader["Title"],
+                                reader["Author"],
+                                reader["Section"],
                                 Convert.ToDateTime(reader["BorrowDate"]).ToShortDateString(),
                                 Convert.ToDateTime(reader["DueDate"]).ToShortDateString()
                             );
@@ -119,33 +131,53 @@ namespace lms_it13.Views
                 dgvMyBooks.SelectedRows[0].Cells["BorrowId"].Value
             );
 
+            int bookId = Convert.ToInt32(
+                dgvMyBooks.SelectedRows[0].Cells["BookId"].Value
+            );
+
             using (SqlConnection conn = new SqlConnection(DatabaseHelper.ConnectionString))
             {
                 conn.Open();
 
-                // Mark as returned
-                string returnQuery = "UPDATE BorrowedBooks SET Returned = 1 WHERE Id = @id";
+                // 🔒 Check if lost FIRST
+                string checkLostQuery = "SELECT Lost FROM BorrowedBooks WHERE Id = @id";
+
+                using (SqlCommand checkCmd = new SqlCommand(checkLostQuery, conn))
+                {
+                    checkCmd.Parameters.AddWithValue("@id", borrowId);
+                    bool isLost = (bool)checkCmd.ExecuteScalar();
+
+                    if (isLost)
+                    {
+                        MessageBox.Show("This book is marked as lost and cannot be returned.");
+                        return;
+                    }
+                }
+
+                // 1️⃣ Mark as returned
+                string returnQuery =
+                    "UPDATE BorrowedBooks SET Returned = 1 WHERE Id = @id";
+
                 using (SqlCommand cmd = new SqlCommand(returnQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", borrowId);
                     cmd.ExecuteNonQuery();
                 }
 
-                // Make book available again
-                string updateBook = @"
-                    UPDATE Books 
-                    SET Status = 'Available'
-                    WHERE Id = (SELECT BookId FROM BorrowedBooks WHERE Id = @id)";
+                // 2️⃣ Increase AvailableCopies
+                string updateBook =
+                    "UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE Id = @bookId";
 
                 using (SqlCommand cmd = new SqlCommand(updateBook, conn))
                 {
-                    cmd.Parameters.AddWithValue("@id", borrowId);
+                    cmd.Parameters.AddWithValue("@bookId", bookId);
                     cmd.ExecuteNonQuery();
                 }
             }
 
             MessageBox.Show("Book returned successfully!");
             LoadBorrowedBooks();
+        
         }
     }
 }
